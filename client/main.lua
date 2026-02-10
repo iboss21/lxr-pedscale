@@ -635,13 +635,15 @@ end)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Register native keybind for interaction (shows in game settings)
+-- Note: The actual interaction is handled by the prompt system loop in SetupPromptSystem()
+-- which checks for IsControlJustPressed(0, Config.Keys.interact). This RegisterCommand
+-- is only for making the keybind visible and rebindable in the game's settings menu.
 RegisterCommand('+lxr_pedscale_interact', function()
-    -- This will be handled by the prompt system loop
-    -- The command registration is primarily for showing the keybind in settings
+    -- Intentionally empty - key press is detected by SetupPromptSystem() loop
 end, false)
 
 RegisterCommand('-lxr_pedscale_interact', function()
-    -- Key release handler (not needed for this use case)
+    -- Intentionally empty - key release handler not needed for this use case
 end, false)
 
 -- Register the keybind mapping (makes it appear in game settings)
