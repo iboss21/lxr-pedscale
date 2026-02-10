@@ -333,7 +333,7 @@ else
     -- Notify player
     function Framework.Notify(message, type, duration)
         if Framework.Active == 'lxr-core' or Framework.Active == 'rsg-core' then
-            if Config.FrameworkSettings[Framework.Active].notifications == 'ox_lib' then
+            if Config.FrameworkSettings[Framework.Active].notifications == 'ox_lib' and GetResourceState('ox_lib') == 'started' then
                 exports['ox_lib']:notify({
                     description = message,
                     type = type or 'info',
@@ -371,7 +371,7 @@ else
     
     -- Open input dialog
     function Framework.OpenInput(header, inputs, cb)
-        if exports['ox_lib'] then
+        if GetResourceState('ox_lib') == 'started' then
             local input = exports['ox_lib']:inputDialog(header, inputs)
             if input then
                 cb(input)
@@ -400,7 +400,7 @@ else
     
     -- Show menu
     function Framework.ShowMenu(header, options, cb)
-        if exports['ox_lib'] then
+        if GetResourceState('ox_lib') == 'started' then
             exports['ox_lib']:registerContext({
                 id = 'lxr_pedscale_menu',
                 title = header,
@@ -417,7 +417,7 @@ else
     
     -- Progress bar
     function Framework.ProgressBar(label, duration, cb)
-        if exports['ox_lib'] then
+        if GetResourceState('ox_lib') == 'started' then
             exports['ox_lib']:progressBar({
                 duration = duration,
                 label = label,
