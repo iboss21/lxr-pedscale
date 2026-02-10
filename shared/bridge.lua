@@ -83,19 +83,53 @@ if IsDuplicityVersion() then
     
     if Framework.Active == 'lxr-core' then
         -- LXR-Core initialization
-        Framework.Object = exports['lxr-core']:GetCoreObject()
+        local success, result = pcall(function()
+            return exports['lxr-core']:GetCoreObject()
+        end)
+        
+        if success then
+            Framework.Object = result
+            print('[LXR-PedScale] Server initialized with LXR-Core')
+        else
+            print('[LXR-PedScale] ERROR: Failed to get LXR-Core object, falling back to standalone')
+            Framework.Active = 'standalone'
+            Framework.Object = {}
+        end
         
     elseif Framework.Active == 'rsg-core' then
         -- RSG-Core initialization
-        Framework.Object = exports['rsg-core']:GetCoreObject()
+        local success, result = pcall(function()
+            return exports['rsg-core']:GetCoreObject()
+        end)
+        
+        if success then
+            Framework.Object = result
+            print('[LXR-PedScale] Server initialized with RSG-Core')
+        else
+            print('[LXR-PedScale] ERROR: Failed to get RSG-Core object, falling back to standalone')
+            Framework.Active = 'standalone'
+            Framework.Object = {}
+        end
         
     elseif Framework.Active == 'vorp_core' then
         -- VORP Core initialization
-        Framework.Object = exports.vorp_core:GetCore()
+        local success, result = pcall(function()
+            return exports.vorp_core:GetCore()
+        end)
+        
+        if success then
+            Framework.Object = result
+            print('[LXR-PedScale] Server initialized with VORP Core')
+        else
+            print('[LXR-PedScale] ERROR: Failed to get VORP Core object, falling back to standalone')
+            Framework.Active = 'standalone'
+            Framework.Object = {}
+        end
         
     elseif Framework.Active == 'standalone' then
         -- Standalone - minimal framework object
         Framework.Object = {}
+        print('[LXR-PedScale] Server running in standalone mode')
     end
     
     -- ═══════════════════════════════════════════════════════════════════════════
@@ -254,57 +288,95 @@ else
     
     if Framework.Active == 'lxr-core' then
         -- LXR-Core initialization
-        Framework.Object = exports['lxr-core']:GetCoreObject()
-        
-        -- Wait for player loaded
-        RegisterNetEvent('lxr-core:client:OnPlayerLoaded', function()
-            Framework.Loaded = true
-            Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+        local success, result = pcall(function()
+            return exports['lxr-core']:GetCoreObject()
         end)
         
-        RegisterNetEvent('lxr-core:client:OnPlayerUnload', function()
-            Framework.Loaded = false
-            Framework.PlayerData = {}
-        end)
-        
-        -- Check if already loaded
-        if Framework.Object.Functions.GetPlayerData() then
+        if success then
+            Framework.Object = result
+            
+            -- Wait for player loaded
+            RegisterNetEvent('lxr-core:client:OnPlayerLoaded', function()
+                Framework.Loaded = true
+                Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+                print('[LXR-PedScale] Player loaded (LXR-Core)')
+            end)
+            
+            RegisterNetEvent('lxr-core:client:OnPlayerUnload', function()
+                Framework.Loaded = false
+                Framework.PlayerData = {}
+            end)
+            
+            -- Check if already loaded
+            if Framework.Object.Functions.GetPlayerData() then
+                Framework.Loaded = true
+                Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+                print('[LXR-PedScale] Player already loaded (LXR-Core)')
+            end
+        else
+            print('[LXR-PedScale] ERROR: Failed to get LXR-Core object, falling back to standalone')
+            Framework.Active = 'standalone'
             Framework.Loaded = true
-            Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+            Framework.PlayerData = {firstname = 'John', lastname = 'Doe', money = {cash = 9999, gold = 9999}}
         end
         
     elseif Framework.Active == 'rsg-core' then
         -- RSG-Core initialization
-        Framework.Object = exports['rsg-core']:GetCoreObject()
-        
-        RegisterNetEvent('RSGCore:Client:OnPlayerLoaded', function()
-            Framework.Loaded = true
-            Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+        local success, result = pcall(function()
+            return exports['rsg-core']:GetCoreObject()
         end)
         
-        RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function()
-            Framework.Loaded = false
-            Framework.PlayerData = {}
-        end)
-        
-        if Framework.Object.Functions.GetPlayerData() then
+        if success then
+            Framework.Object = result
+            
+            RegisterNetEvent('RSGCore:Client:OnPlayerLoaded', function()
+                Framework.Loaded = true
+                Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+                print('[LXR-PedScale] Player loaded (RSG-Core)')
+            end)
+            
+            RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function()
+                Framework.Loaded = false
+                Framework.PlayerData = {}
+            end)
+            
+            if Framework.Object.Functions.GetPlayerData() then
+                Framework.Loaded = true
+                Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+                print('[LXR-PedScale] Player already loaded (RSG-Core)')
+            end
+        else
+            print('[LXR-PedScale] ERROR: Failed to get RSG-Core object, falling back to standalone')
+            Framework.Active = 'standalone'
             Framework.Loaded = true
-            Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+            Framework.PlayerData = {firstname = 'John', lastname = 'Doe', money = {cash = 9999, gold = 9999}}
         end
         
     elseif Framework.Active == 'vorp_core' then
         -- VORP Core initialization
-        Framework.Object = exports.vorp_core:GetCore()
+        local success, result = pcall(function()
+            return exports.vorp_core:GetCore()
+        end)
         
-        RegisterNetEvent('vorp:SelectedCharacter', function()
-            Wait(1000)
+        if success then
+            Framework.Object = result
+            
+            RegisterNetEvent('vorp:SelectedCharacter', function()
+                Wait(1000)
+                Framework.Loaded = true
+                TriggerServerEvent('lxr-pedscale:server:getPlayerData')
+                print('[LXR-PedScale] Player loaded (VORP)')
+            end)
+            
+            RegisterNetEvent('lxr-pedscale:client:setPlayerData', function(data)
+                Framework.PlayerData = data
+            end)
+        else
+            print('[LXR-PedScale] ERROR: Failed to get VORP Core object, falling back to standalone')
+            Framework.Active = 'standalone'
             Framework.Loaded = true
-            TriggerServerEvent('lxr-pedscale:server:getPlayerData')
-        end)
-        
-        RegisterNetEvent('lxr-pedscale:client:setPlayerData', function(data)
-            Framework.PlayerData = data
-        end)
+            Framework.PlayerData = {firstname = 'John', lastname = 'Doe', money = {cash = 9999, gold = 9999}}
+        end
         
     elseif Framework.Active == 'standalone' then
         -- Standalone - always loaded
@@ -314,6 +386,7 @@ else
             lastname = 'Doe',
             money = {cash = 9999, gold = 9999}
         }
+        print('[LXR-PedScale] Running in standalone mode')
     end
     
     -- ═══════════════════════════════════════════════════════════════════════════

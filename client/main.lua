@@ -625,9 +625,24 @@ end)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 CreateThread(function()
+    print('[LXR-PedScale] Initialization starting...')
+    print('[LXR-PedScale] Framework: ' .. Framework.GetActiveFramework())
+    
     -- Wait for framework to load
+    local attempts = 0
     while not Framework.IsPlayerLoaded() do
         Wait(100)
+        attempts = attempts + 1
+        
+        if attempts % 50 == 0 then -- Every 5 seconds
+            print('[LXR-PedScale] Waiting for player to load... (' .. (attempts / 10) .. 's)')
+        end
+        
+        if attempts > 600 then -- 60 seconds timeout
+            print('[LXR-PedScale] WARNING: Player load timeout, forcing initialization')
+            Framework.Loaded = true
+            break
+        end
     end
     
     Wait(2000) -- Additional wait for stability
