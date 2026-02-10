@@ -492,7 +492,7 @@ end
 -- Setup target system
 local function SetupTargetSystem()
     if not Config.General.useTarget then return end
-    if not exports['ox_target'] then return end
+    if GetResourceState('ox_target') ~= 'started' then return end
     
     for _, npcData in ipairs(Config.NPCs) do
         exports['ox_target']:addModel(npcData.model, {
@@ -629,6 +629,23 @@ CreateThread(function()
     
     print('[LXR-PedScale] Client initialized - Framework: ' .. Framework.GetActiveFramework())
 end)
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 🐺 KEYBIND REGISTRATION
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- Register native keybind for interaction (shows in game settings)
+RegisterCommand('+lxr_pedscale_interact', function()
+    -- This will be handled by the prompt system loop
+    -- The command registration is primarily for showing the keybind in settings
+end, false)
+
+RegisterCommand('-lxr_pedscale_interact', function()
+    -- Key release handler (not needed for this use case)
+end, false)
+
+-- Register the keybind mapping (makes it appear in game settings)
+RegisterKeyMapping('+lxr_pedscale_interact', 'Interact with Character Customization NPC', 'keyboard', 'G')
 
 -- Cleanup on resource stop
 AddEventHandler('onResourceStop', function(resourceName)
