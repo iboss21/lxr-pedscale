@@ -1,0 +1,107 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🐺 LXR Ped Scale - Git Ignore Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Log Files
+*.log
+logs/
+*.log.*
+
+# Temporary Files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Backup Files
+*.bak
+*.backup
+*~
+
+# Cache Files
+cache/
+*.cache
+
+# Build and Distribution
+dist/
+build/
+*.zip
+*.rar
+*.7z
+
+# Development and Testing
+test/
+tests/
+.env
+.env.local
+
+# Documentation Build Files (if using doc generators)
+docs/build/
+docs/_build/
+
+# Node modules (if any JS tooling is added)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Database Files (if local testing)
+*.db
+*.sqlite
+*.sqlite3
+
+# Custom Server Config (keep template only)
+# config.lua  # Uncomment if you want to ignore custom configs
+
+# Screenshots (optional - remove if you want to commit them)
+# docs/assets/screenshots/*.png
+
+# Personal Notes
+NOTES.md
+TODO.md
+.todo
+
+# FiveM/RedM Specific
+stream/
+cache/
+*.rpf
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Keep Important Files
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Always include
+!fxmanifest.lua
+!config.lua
+!README.md
+!LICENSE
+
+# Always include source files
+!client/
+!server/
+!shared/
+!docs/
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🐺 wolves.land - The Land of Wolves
+# ═══════════════════════════════════════════════════════════════════════════════
