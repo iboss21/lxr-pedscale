@@ -482,8 +482,13 @@ else
                 AddTextEntry('INPUT_PROMPT_' .. i, input.label or 'Enter text')
                 DisplayOnscreenKeyboard(0, 'INPUT_PROMPT_' .. i, '', input.default or '', '', '', '', 64)
                 
-                while true do
-                    Wait(0)
+                local timeout = 0
+                local maxTimeout = 300 -- 30 seconds (300 * 100ms)
+                
+                while timeout < maxTimeout do
+                    Wait(100)
+                    timeout = timeout + 1
+                    
                     local status = UpdateOnscreenKeyboard()
                     if status == 1 then
                         -- Input confirmed
@@ -511,6 +516,13 @@ else
                         return
                     end
                 end
+                
+                -- Timeout reached
+                if timeout >= maxTimeout then
+                    print('[LXR-PedScale] Keyboard input timeout')
+                    cb(nil)
+                    return
+                end
             end
             cb(results)
         end
@@ -531,28 +543,32 @@ else
                 local currentOption = 1
                 local menuActive = true
                 
+                -- Menu positioning constants
+                local MENU_START_Y = 0.20
+                local MENU_OPTION_SPACING = 0.04
+                
                 while menuActive do
                     Wait(0)
                     
-                    -- Draw menu background
+                    -- Draw menu background (dark gray for visibility)
                     DrawSprite(
                         'generic_textures', 'hud_menu_4a',  -- Texture dictionary and name
                         0.5, 0.3,                            -- Screen position (X, Y)
                         0.35, 0.5,                           -- Size (width, height)
                         0.0,                                 -- Rotation
-                        0, 0, 0, 200                         -- Color (R, G, B, A)
+                        20, 20, 20, 200                      -- Color (R, G, B, A) - dark gray
                     )
                     
                     -- Draw header
                     SetTextScale(0.45, 0.45)
                     SetTextColor(255, 200, 100, 255)
-                    SetTextCentre(true)
                     SetTextDropshadow(1, 0, 0, 0, 255)
+                    SetTextCentre(true)
                     DisplayText(CreateVarString(10, 'LITERAL_STRING', header), 0.5, 0.15)
                     
                     -- Draw options
                     for i, option in ipairs(options) do
-                        local yPos = 0.20 + (i * 0.04)
+                        local yPos = MENU_START_Y + (i * MENU_OPTION_SPACING)
                         
                         if i == currentOption then
                             SetTextScale(0.38, 0.38)
@@ -563,13 +579,14 @@ else
                             SetTextColor(200, 200, 200, 255)
                             DisplayText(CreateVarString(10, 'LITERAL_STRING', '  ' .. option.title), 0.5, yPos)
                         end
-                        SetTextCentre(true)
                         SetTextDropshadow(1, 0, 0, 0, 255)
+                        SetTextCentre(true)
                     end
                     
                     -- Draw controls hint
                     SetTextScale(0.30, 0.30)
                     SetTextColor(150, 150, 150, 255)
+                    SetTextDropshadow(1, 0, 0, 0, 255)
                     SetTextCentre(true)
                     DisplayText(CreateVarString(10, 'LITERAL_STRING', 'Arrow Keys to navigate | Enter to select | Backspace to cancel'), 0.5, 0.45)
                     

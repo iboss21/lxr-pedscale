@@ -634,11 +634,13 @@ CreateThread(function()
         Wait(100)
         attempts = attempts + 1
         
-        if attempts % 50 == 0 then -- Every 5 seconds
-            print('[LXR-PedScale] Waiting for player to load... (' .. (attempts / 10) .. 's)')
+        -- Every 5 seconds (50 attempts * 100ms = 5000ms), log progress
+        if attempts % 50 == 0 then
+            local elapsedSeconds = (attempts * 100) / 1000
+            print('[LXR-PedScale] Waiting for player to load... (' .. elapsedSeconds .. 's)')
         end
         
-        if attempts > 600 then -- 60 seconds timeout
+        if attempts > 600 then -- 60 seconds timeout (600 * 100ms)
             print('[LXR-PedScale] WARNING: Player load timeout, forcing initialization')
             Framework.Loaded = true
             break
