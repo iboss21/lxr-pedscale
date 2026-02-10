@@ -345,7 +345,30 @@ else
         elseif Framework.Active == 'vorp_core' then
             Framework.Object.NotifyLeft('LXR Ped Scale', message, 'generic_textures', 'tick', duration or 5000)
         else
-            -- Fallback to print
+            -- Fallback to 3D text notification
+            CreateThread(function()
+                local startTime = GetGameTimer()
+                local displayDuration = duration or 5000
+                
+                while GetGameTimer() - startTime < displayDuration do
+                    Wait(0)
+                    
+                    -- Draw notification in screen center
+                    SetTextScale(0.40, 0.40)
+                    if type == 'error' then
+                        SetTextColor(255, 100, 100, 255)
+                    elseif type == 'success' then
+                        SetTextColor(100, 255, 100, 255)
+                    else
+                        SetTextColor(255, 200, 100, 255)
+                    end
+                    SetTextCentre(true)
+                    SetTextDropshadow(2, 0, 0, 0, 255)
+                    DisplayText(CreateVarString(10, 'LITERAL_STRING', message), 0.5, 0.85)
+                end
+            end)
+            
+            -- Also print to console
             print('[LXR-PedScale] ' .. message)
         end
     end
@@ -379,19 +402,41 @@ else
                 cb(nil)
             end
         else
-            -- Fallback to native input (simplified)
+            -- Fallback to native RedM input
             local results = {}
             for i, input in ipairs(inputs) do
-                AddTextEntry('INPUT_' .. i, input.label)
-                DisplayOnscreenKeyboard(1, 'INPUT_' .. i, '', input.default or '', '', '', '', 64)
-                while UpdateOnscreenKeyboard() == 0 do
+                -- Use RedM native prompt for text input
+                AddTextEntry('INPUT_PROMPT_' .. i, input.label or 'Enter text')
+                DisplayOnscreenKeyboard(0, 'INPUT_PROMPT_' .. i, '', input.default or '', '', '', '', 64)
+                
+                while true do
                     Wait(0)
-                end
-                if GetOnscreenKeyboardResult() then
-                    results[input.name or i] = GetOnscreenKeyboardResult()
-                else
-                    cb(nil)
-                    return
+                    local status = UpdateOnscreenKeyboard()
+                    if status == 1 then
+                        -- Input confirmed
+                        local result = GetOnscreenKeyboardResult()
+                        if result and result ~= '' then
+                            results[input.name or i] = result
+                            break
+                        else
+                            -- Empty result
+                            if input.required then
+                                cb(nil)
+                                return
+                            else
+                                results[input.name or i] = ''
+                                break
+                            end
+                        end
+                    elseif status == 2 then
+                        -- Input cancelled
+                        cb(nil)
+                        return
+                    elseif status == 3 then
+                        -- Input cancelled (alternative code)
+                        cb(nil)
+                        return
+                    end
                 end
             end
             cb(results)
@@ -408,10 +453,65 @@ else
             })
             exports['ox_lib']:showContext('lxr_pedscale_menu')
         else
-            -- Fallback - trigger first option for testing
-            if options and #options > 0 and options[1].onSelect then
-                options[1].onSelect()
-            end
+            -- Fallback - simple native menu using text display
+            CreateThread(function()
+                local currentOption = 1
+                local menuActive = true
+                
+                while menuActive do
+                    Wait(0)
+                    
+                    -- Draw menu background
+                    DrawSprite('generic_textures', 'hud_menu_4a', 0.5, 0.3, 0.35, 0.5, 0.0, 0, 0, 0, 200)
+                    
+                    -- Draw header
+                    SetTextScale(0.45, 0.45)
+                    SetTextColor(255, 200, 100, 255)
+                    SetTextCentre(true)
+                    SetTextDropshadow(1, 0, 0, 0, 255)
+                    DisplayText(CreateVarString(10, 'LITERAL_STRING', header), 0.5, 0.15)
+                    
+                    -- Draw options
+                    for i, option in ipairs(options) do
+                        local yPos = 0.20 + (i * 0.04)
+                        
+                        if i == currentOption then
+                            SetTextScale(0.38, 0.38)
+                            SetTextColor(255, 200, 100, 255)
+                            DisplayText(CreateVarString(10, 'LITERAL_STRING', '> ' .. option.title), 0.5, yPos)
+                        else
+                            SetTextScale(0.35, 0.35)
+                            SetTextColor(200, 200, 200, 255)
+                            DisplayText(CreateVarString(10, 'LITERAL_STRING', '  ' .. option.title), 0.5, yPos)
+                        end
+                        SetTextCentre(true)
+                        SetTextDropshadow(1, 0, 0, 0, 255)
+                    end
+                    
+                    -- Draw controls hint
+                    SetTextScale(0.30, 0.30)
+                    SetTextColor(150, 150, 150, 255)
+                    SetTextCentre(true)
+                    DisplayText(CreateVarString(10, 'LITERAL_STRING', 'Arrow Keys to navigate | Enter to select | Backspace to cancel'), 0.5, 0.45)
+                    
+                    -- Handle input
+                    if IsControlJustPressed(0, 0xD9D0E1C0) then -- Arrow Up
+                        currentOption = currentOption - 1
+                        if currentOption < 1 then currentOption = #options end
+                    elseif IsControlJustPressed(0, 0x05CA7C52) then -- Arrow Down
+                        currentOption = currentOption + 1
+                        if currentOption > #options then currentOption = 1 end
+                    elseif IsControlJustPressed(0, 0xC7B5340A) then -- Enter
+                        if options[currentOption] and options[currentOption].onSelect then
+                            menuActive = false
+                            options[currentOption].onSelect()
+                        end
+                    elseif IsControlJustPressed(0, 0x156F7119) then -- Backspace
+                        menuActive = false
+                        if cb then cb(nil) end
+                    end
+                end
+            end)
         end
     end
     

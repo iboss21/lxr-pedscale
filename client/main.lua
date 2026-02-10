@@ -527,15 +527,35 @@ local function SetupPromptSystem()
                         if distance < Config.General.interactionDistance then
                             sleep = 0
                             
-                            -- Draw prompt
-                            local onScreen, screenX, screenY = GetScreenCoordFromWorldCoord(npc.coords.x, npc.coords.y, npc.coords.z + 1.0)
+                            -- Draw 3D prompt text above NPC
+                            local npcCoords = GetEntityCoords(npc.ped)
+                            local onScreen, screenX, screenY = GetScreenCoordFromWorldCoord(npcCoords.x, npcCoords.y, npcCoords.z + 1.2)
                             if onScreen then
-                                SetTextScale(0.35, 0.35)
+                                -- Draw title
+                                SetTextScale(0.40, 0.40)
                                 SetTextColor(255, 200, 100, 255)
                                 SetTextCentre(true)
-                                SetTextDropshadow(1, 0, 0, 0, 255)
-                                DisplayText(CreateVarString(10, 'LITERAL_STRING', L('interact_npc', npc.data.name)), screenX, screenY)
+                                SetTextDropshadow(2, 0, 0, 0, 255)
+                                DisplayText(CreateVarString(10, 'LITERAL_STRING', npc.data.name), screenX, screenY - 0.025)
+                                
+                                -- Draw interaction prompt
+                                SetTextScale(0.35, 0.35)
+                                SetTextColor(200, 255, 200, 255)
+                                SetTextCentre(true)
+                                SetTextDropshadow(2, 0, 0, 0, 255)
+                                DisplayText(CreateVarString(10, 'LITERAL_STRING', '[G] Character Customization'), screenX, screenY + 0.005)
                             end
+                            
+                            -- Draw marker at NPC feet for better visibility
+                            DrawMarker(
+                                0x94FDAE17, -- MARKER_CYLINDER
+                                npcCoords.x, npcCoords.y, npcCoords.z - 0.98,
+                                0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0,
+                                0.8, 0.8, 0.5,
+                                255, 200, 100, 100,
+                                false, false, 2, false, nil, nil, false
+                            )
                             
                             -- Check for key press
                             if IsControlJustPressed(0, Config.Keys.interact) then
@@ -612,16 +632,37 @@ CreateThread(function()
     
     Wait(2000) -- Additional wait for stability
     
+    print('[LXR-PedScale] Starting NPC spawn process...')
+    
     -- Spawn all NPCs
-    for _, npcData in ipairs(Config.NPCs) do
-        SpawnNPC(npcData)
+    for i, npcData in ipairs(Config.NPCs) do
+        local success, err = pcall(function()
+            SpawnNPC(npcData)
+        end)
+        
+        if not success then
+            print('[LXR-PedScale] ERROR spawning NPC ' .. (npcData.name or 'Unknown') .. ': ' .. tostring(err))
+        else
+            print('[LXR-PedScale] Successfully spawned NPC: ' .. (npcData.name or 'Unknown'))
+        end
     end
+    
+    print('[LXR-PedScale] Spawned ' .. #spawnedNPCs .. ' NPCs out of ' .. #Config.NPCs .. ' configured')
     
     -- Setup interaction system
     if Config.General.useTarget then
-        SetupTargetSystem()
+        local targetState = GetResourceState('ox_target')
+        if targetState == 'started' then
+            SetupTargetSystem()
+            print('[LXR-PedScale] Using ox_target interaction system')
+        else
+            print('[LXR-PedScale] WARNING: useTarget is true but ox_target is not started (state: ' .. targetState .. ')')
+            print('[LXR-PedScale] Falling back to prompt-based interaction')
+            SetupPromptSystem()
+        end
     else
         SetupPromptSystem()
+        print('[LXR-PedScale] Using prompt-based interaction system')
     end
     
     -- Request current scale from server
