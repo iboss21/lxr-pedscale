@@ -269,11 +269,25 @@ Locale.yourlang = {
 - Check coordinates in config
 - Verify NPC models are valid
 - Enable debug mode: `Config.Debug.enabled = true`
+- Use command `/pedscale_status` to check NPC spawn status
 
 ### Menus not opening
-- Ensure ox_lib is installed and running
+- Ensure ox_lib is installed and running (or use fallback)
 - Check if player is fully loaded
 - Verify interaction distance
+- Try the test command: `/pedscale_test` (requires debug mode)
+- Check console for error messages
+
+### Keyboard input not working
+- The script has built-in fallback for native RedM keyboard
+- If using ox_lib, ensure it's updated to latest version
+- Check console for keyboard input errors
+
+### Debug Commands (when Config.Debug.enabled = true)
+- `/pedscale_status` - Show resource status and NPC info
+- `/pedscale_test` - Test menu system without approaching NPC
+- `/pedscale_resetcooldown [playerid]` - Reset player cooldowns (admin)
+- `/pedscale_setscale [playerid] [scale]` - Force set player scale (admin)
 
 For more help, see [📖 Documentation](docs/) or [🎮 Discord](https://discord.gg/CrKcWdfd3A)
 

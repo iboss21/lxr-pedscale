@@ -690,6 +690,39 @@ end, false)
 -- Register the keybind mapping (makes it appear in game settings)
 RegisterKeyMapping('+lxr_pedscale_interact', 'Interact with Character Customization NPC', 'keyboard', 'G')
 
+-- Debug command to test menu system
+RegisterCommand('pedscale_test', function(source, args, rawCommand)
+    if Config.Debug.enabled then
+        print('[LXR-PedScale] Testing menu system...')
+        
+        -- Test with first NPC data
+        if Config.NPCs and Config.NPCs[1] then
+            OnNPCInteract(Config.NPCs[1])
+            print('[LXR-PedScale] Opened test menu')
+        else
+            print('[LXR-PedScale] ERROR: No NPCs configured')
+        end
+    end
+end, false)
+
+-- Debug command to check spawned NPCs
+RegisterCommand('pedscale_status', function(source, args, rawCommand)
+    if Config.Debug.enabled then
+        print('[LXR-PedScale] === Status Report ===')
+        print('Framework: ' .. Framework.GetActiveFramework())
+        print('Player Loaded: ' .. tostring(Framework.IsPlayerLoaded()))
+        print('Spawned NPCs: ' .. #spawnedNPCs .. ' / ' .. #Config.NPCs)
+        print('In Customization: ' .. tostring(inCustomization))
+        print('ox_lib State: ' .. GetResourceState('ox_lib'))
+        print('ox_target State: ' .. GetResourceState('ox_target'))
+        
+        for i, npc in ipairs(spawnedNPCs) do
+            local exists = DoesEntityExist(npc.ped)
+            print(string.format('  NPC %d (%s): %s', i, npc.data.name, exists and 'EXISTS' or 'MISSING'))
+        end
+    end
+end, false)
+
 -- Cleanup on resource stop
 AddEventHandler('onResourceStop', function(resourceName)
     if GetCurrentResourceName() ~= resourceName then return end
