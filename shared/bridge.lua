@@ -83,19 +83,53 @@ if IsDuplicityVersion() then
     
     if Framework.Active == 'lxr-core' then
         -- LXR-Core initialization
-        Framework.Object = exports['lxr-core']:GetCoreObject()
+        local success, result = pcall(function()
+            return exports['lxr-core']:GetCoreObject()
+        end)
+        
+        if success then
+            Framework.Object = result
+            print('[LXR-PedScale] Server initialized with LXR-Core')
+        else
+            print('[LXR-PedScale] ERROR: Failed to get LXR-Core object, falling back to standalone')
+            Framework.Active = 'standalone'
+            Framework.Object = {}
+        end
         
     elseif Framework.Active == 'rsg-core' then
         -- RSG-Core initialization
-        Framework.Object = exports['rsg-core']:GetCoreObject()
+        local success, result = pcall(function()
+            return exports['rsg-core']:GetCoreObject()
+        end)
+        
+        if success then
+            Framework.Object = result
+            print('[LXR-PedScale] Server initialized with RSG-Core')
+        else
+            print('[LXR-PedScale] ERROR: Failed to get RSG-Core object, falling back to standalone')
+            Framework.Active = 'standalone'
+            Framework.Object = {}
+        end
         
     elseif Framework.Active == 'vorp_core' then
         -- VORP Core initialization
-        Framework.Object = exports.vorp_core:GetCore()
+        local success, result = pcall(function()
+            return exports.vorp_core:GetCore()
+        end)
+        
+        if success then
+            Framework.Object = result
+            print('[LXR-PedScale] Server initialized with VORP Core')
+        else
+            print('[LXR-PedScale] ERROR: Failed to get VORP Core object, falling back to standalone')
+            Framework.Active = 'standalone'
+            Framework.Object = {}
+        end
         
     elseif Framework.Active == 'standalone' then
         -- Standalone - minimal framework object
         Framework.Object = {}
+        print('[LXR-PedScale] Server running in standalone mode')
     end
     
     -- ═══════════════════════════════════════════════════════════════════════════
@@ -254,57 +288,95 @@ else
     
     if Framework.Active == 'lxr-core' then
         -- LXR-Core initialization
-        Framework.Object = exports['lxr-core']:GetCoreObject()
-        
-        -- Wait for player loaded
-        RegisterNetEvent('lxr-core:client:OnPlayerLoaded', function()
-            Framework.Loaded = true
-            Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+        local success, result = pcall(function()
+            return exports['lxr-core']:GetCoreObject()
         end)
         
-        RegisterNetEvent('lxr-core:client:OnPlayerUnload', function()
-            Framework.Loaded = false
-            Framework.PlayerData = {}
-        end)
-        
-        -- Check if already loaded
-        if Framework.Object.Functions.GetPlayerData() then
+        if success then
+            Framework.Object = result
+            
+            -- Wait for player loaded
+            RegisterNetEvent('lxr-core:client:OnPlayerLoaded', function()
+                Framework.Loaded = true
+                Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+                print('[LXR-PedScale] Player loaded (LXR-Core)')
+            end)
+            
+            RegisterNetEvent('lxr-core:client:OnPlayerUnload', function()
+                Framework.Loaded = false
+                Framework.PlayerData = {}
+            end)
+            
+            -- Check if already loaded
+            if Framework.Object.Functions.GetPlayerData() then
+                Framework.Loaded = true
+                Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+                print('[LXR-PedScale] Player already loaded (LXR-Core)')
+            end
+        else
+            print('[LXR-PedScale] ERROR: Failed to get LXR-Core object, falling back to standalone')
+            Framework.Active = 'standalone'
             Framework.Loaded = true
-            Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+            Framework.PlayerData = {firstname = 'John', lastname = 'Doe', money = {cash = 9999, gold = 9999}}
         end
         
     elseif Framework.Active == 'rsg-core' then
         -- RSG-Core initialization
-        Framework.Object = exports['rsg-core']:GetCoreObject()
-        
-        RegisterNetEvent('RSGCore:Client:OnPlayerLoaded', function()
-            Framework.Loaded = true
-            Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+        local success, result = pcall(function()
+            return exports['rsg-core']:GetCoreObject()
         end)
         
-        RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function()
-            Framework.Loaded = false
-            Framework.PlayerData = {}
-        end)
-        
-        if Framework.Object.Functions.GetPlayerData() then
+        if success then
+            Framework.Object = result
+            
+            RegisterNetEvent('RSGCore:Client:OnPlayerLoaded', function()
+                Framework.Loaded = true
+                Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+                print('[LXR-PedScale] Player loaded (RSG-Core)')
+            end)
+            
+            RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function()
+                Framework.Loaded = false
+                Framework.PlayerData = {}
+            end)
+            
+            if Framework.Object.Functions.GetPlayerData() then
+                Framework.Loaded = true
+                Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+                print('[LXR-PedScale] Player already loaded (RSG-Core)')
+            end
+        else
+            print('[LXR-PedScale] ERROR: Failed to get RSG-Core object, falling back to standalone')
+            Framework.Active = 'standalone'
             Framework.Loaded = true
-            Framework.PlayerData = Framework.Object.Functions.GetPlayerData()
+            Framework.PlayerData = {firstname = 'John', lastname = 'Doe', money = {cash = 9999, gold = 9999}}
         end
         
     elseif Framework.Active == 'vorp_core' then
         -- VORP Core initialization
-        Framework.Object = exports.vorp_core:GetCore()
+        local success, result = pcall(function()
+            return exports.vorp_core:GetCore()
+        end)
         
-        RegisterNetEvent('vorp:SelectedCharacter', function()
-            Wait(1000)
+        if success then
+            Framework.Object = result
+            
+            RegisterNetEvent('vorp:SelectedCharacter', function()
+                Wait(1000)
+                Framework.Loaded = true
+                TriggerServerEvent('lxr-pedscale:server:getPlayerData')
+                print('[LXR-PedScale] Player loaded (VORP)')
+            end)
+            
+            RegisterNetEvent('lxr-pedscale:client:setPlayerData', function(data)
+                Framework.PlayerData = data
+            end)
+        else
+            print('[LXR-PedScale] ERROR: Failed to get VORP Core object, falling back to standalone')
+            Framework.Active = 'standalone'
             Framework.Loaded = true
-            TriggerServerEvent('lxr-pedscale:server:getPlayerData')
-        end)
-        
-        RegisterNetEvent('lxr-pedscale:client:setPlayerData', function(data)
-            Framework.PlayerData = data
-        end)
+            Framework.PlayerData = {firstname = 'John', lastname = 'Doe', money = {cash = 9999, gold = 9999}}
+        end
         
     elseif Framework.Active == 'standalone' then
         -- Standalone - always loaded
@@ -314,6 +386,7 @@ else
             lastname = 'Doe',
             money = {cash = 9999, gold = 9999}
         }
+        print('[LXR-PedScale] Running in standalone mode')
     end
     
     -- ═══════════════════════════════════════════════════════════════════════════
@@ -345,7 +418,30 @@ else
         elseif Framework.Active == 'vorp_core' then
             Framework.Object.NotifyLeft('LXR Ped Scale', message, 'generic_textures', 'tick', duration or 5000)
         else
-            -- Fallback to print
+            -- Fallback to 3D text notification
+            CreateThread(function()
+                local startTime = GetGameTimer()
+                local displayDuration = duration or 5000
+                
+                while GetGameTimer() - startTime < displayDuration do
+                    Wait(0)
+                    
+                    -- Draw notification in screen center
+                    SetTextScale(0.40, 0.40)
+                    if type == 'error' then
+                        SetTextColor(255, 100, 100, 255)
+                    elseif type == 'success' then
+                        SetTextColor(100, 255, 100, 255)
+                    else
+                        SetTextColor(255, 200, 100, 255)
+                    end
+                    SetTextCentre(true)
+                    SetTextDropshadow(2, 0, 0, 0, 255)
+                    DisplayText(CreateVarString(10, 'LITERAL_STRING', message), 0.5, 0.85)
+                end
+            end)
+            
+            -- Also print to console
             print('[LXR-PedScale] ' .. message)
         end
     end
@@ -379,17 +475,51 @@ else
                 cb(nil)
             end
         else
-            -- Fallback to native input (simplified)
+            -- Fallback to native RedM input
             local results = {}
             for i, input in ipairs(inputs) do
-                AddTextEntry('INPUT_' .. i, input.label)
-                DisplayOnscreenKeyboard(1, 'INPUT_' .. i, '', input.default or '', '', '', '', 64)
-                while UpdateOnscreenKeyboard() == 0 do
-                    Wait(0)
+                -- Use RedM native prompt for text input
+                AddTextEntry('INPUT_PROMPT_' .. i, input.label or 'Enter text')
+                DisplayOnscreenKeyboard(0, 'INPUT_PROMPT_' .. i, '', input.default or '', '', '', '', 64)
+                
+                local timeout = 0
+                local maxTimeout = 300 -- 30 seconds (300 * 100ms)
+                
+                while timeout < maxTimeout do
+                    Wait(100)
+                    timeout = timeout + 1
+                    
+                    local status = UpdateOnscreenKeyboard()
+                    if status == 1 then
+                        -- Input confirmed
+                        local result = GetOnscreenKeyboardResult()
+                        if result and result ~= '' then
+                            results[input.name or i] = result
+                            break
+                        else
+                            -- Empty result
+                            if input.required then
+                                cb(nil)
+                                return
+                            else
+                                results[input.name or i] = ''
+                                break
+                            end
+                        end
+                    elseif status == 2 then
+                        -- Input cancelled
+                        cb(nil)
+                        return
+                    elseif status == 3 then
+                        -- Input cancelled (alternative code)
+                        cb(nil)
+                        return
+                    end
                 end
-                if GetOnscreenKeyboardResult() then
-                    results[input.name or i] = GetOnscreenKeyboardResult()
-                else
+                
+                -- Timeout reached
+                if timeout >= maxTimeout then
+                    print('[LXR-PedScale] Keyboard input timeout')
                     cb(nil)
                     return
                 end
@@ -408,10 +538,76 @@ else
             })
             exports['ox_lib']:showContext('lxr_pedscale_menu')
         else
-            -- Fallback - trigger first option for testing
-            if options and #options > 0 and options[1].onSelect then
-                options[1].onSelect()
-            end
+            -- Fallback - simple native menu using text display
+            CreateThread(function()
+                local currentOption = 1
+                local menuActive = true
+                
+                -- Menu positioning constants
+                local MENU_START_Y = 0.20
+                local MENU_OPTION_SPACING = 0.04
+                
+                while menuActive do
+                    Wait(0)
+                    
+                    -- Draw menu background (dark gray for visibility)
+                    DrawSprite(
+                        'generic_textures', 'hud_menu_4a',  -- Texture dictionary and name
+                        0.5, 0.3,                            -- Screen position (X, Y)
+                        0.35, 0.5,                           -- Size (width, height)
+                        0.0,                                 -- Rotation
+                        20, 20, 20, 200                      -- Color (R, G, B, A) - dark gray
+                    )
+                    
+                    -- Draw header
+                    SetTextScale(0.45, 0.45)
+                    SetTextColor(255, 200, 100, 255)
+                    SetTextDropshadow(1, 0, 0, 0, 255)
+                    SetTextCentre(true)
+                    DisplayText(CreateVarString(10, 'LITERAL_STRING', header), 0.5, 0.15)
+                    
+                    -- Draw options
+                    for i, option in ipairs(options) do
+                        local yPos = MENU_START_Y + (i * MENU_OPTION_SPACING)
+                        
+                        if i == currentOption then
+                            SetTextScale(0.38, 0.38)
+                            SetTextColor(255, 200, 100, 255)
+                            DisplayText(CreateVarString(10, 'LITERAL_STRING', '> ' .. option.title), 0.5, yPos)
+                        else
+                            SetTextScale(0.35, 0.35)
+                            SetTextColor(200, 200, 200, 255)
+                            DisplayText(CreateVarString(10, 'LITERAL_STRING', '  ' .. option.title), 0.5, yPos)
+                        end
+                        SetTextDropshadow(1, 0, 0, 0, 255)
+                        SetTextCentre(true)
+                    end
+                    
+                    -- Draw controls hint
+                    SetTextScale(0.30, 0.30)
+                    SetTextColor(150, 150, 150, 255)
+                    SetTextDropshadow(1, 0, 0, 0, 255)
+                    SetTextCentre(true)
+                    DisplayText(CreateVarString(10, 'LITERAL_STRING', 'Arrow Keys to navigate | Enter to select | Backspace to cancel'), 0.5, 0.45)
+                    
+                    -- Handle input
+                    if IsControlJustPressed(0, 0xD9D0E1C0) then -- Arrow Up
+                        currentOption = currentOption - 1
+                        if currentOption < 1 then currentOption = #options end
+                    elseif IsControlJustPressed(0, 0x05CA7C52) then -- Arrow Down
+                        currentOption = currentOption + 1
+                        if currentOption > #options then currentOption = 1 end
+                    elseif IsControlJustPressed(0, 0xC7B5340A) then -- Enter
+                        if options[currentOption] and options[currentOption].onSelect then
+                            menuActive = false
+                            options[currentOption].onSelect()
+                        end
+                    elseif IsControlJustPressed(0, 0x156F7119) then -- Backspace
+                        menuActive = false
+                        if cb then cb(nil) end
+                    end
+                end
+            end)
         end
     end
     

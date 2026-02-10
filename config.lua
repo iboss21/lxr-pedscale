@@ -169,8 +169,8 @@ Config.Lang = 'en' -- Language for notifications (en, ge, es, fr, etc.)
 -- ████████████████████████████████████████████████████████████████████████████████
 
 Config.General = {
-    useTarget = true,              -- Use target system (ox_target) or prompts
-    interactionDistance = 2.0,     -- Distance to interact with NPC
+    useTarget = false,             -- Use target system (ox_target) or prompts (changed to false for better compatibility)
+    interactionDistance = 2.5,     -- Distance to interact with NPC (increased for better detection)
     enableCamera = true,           -- Enable cinematic camera during interaction
     enableClonePreview = true,     -- Enable ped clone preview with scale changes
     enableOverheadLight = true,    -- Enable overhead light for clone preview
@@ -469,10 +469,10 @@ Config.UI = {
 -- ████████████████████████████████████████████████████████████████████████████████
 
 Config.Debug = {
-    enabled = false,            -- Enable debug mode
-    printEvents = false,        -- Print event triggers
+    enabled = true,             -- Enable debug mode (enabled to help diagnose issues)
+    printEvents = true,         -- Print event triggers
     printFramework = true,      -- Print framework detection
-    printNPCSpawns = false,     -- Print NPC spawn/despawn
+    printNPCSpawns = true,      -- Print NPC spawn/despawn
     printValidation = false,    -- Print validation checks
     printCamera = false,        -- Print camera operations
     printScale = false,         -- Print scale changes

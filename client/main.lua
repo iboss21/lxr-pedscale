@@ -527,15 +527,35 @@ local function SetupPromptSystem()
                         if distance < Config.General.interactionDistance then
                             sleep = 0
                             
-                            -- Draw prompt
-                            local onScreen, screenX, screenY = GetScreenCoordFromWorldCoord(npc.coords.x, npc.coords.y, npc.coords.z + 1.0)
+                            -- Draw 3D prompt text above NPC
+                            local npcCoords = GetEntityCoords(npc.ped)
+                            local onScreen, screenX, screenY = GetScreenCoordFromWorldCoord(npcCoords.x, npcCoords.y, npcCoords.z + 1.2)
                             if onScreen then
-                                SetTextScale(0.35, 0.35)
+                                -- Draw title
+                                SetTextScale(0.40, 0.40)
                                 SetTextColor(255, 200, 100, 255)
                                 SetTextCentre(true)
-                                SetTextDropshadow(1, 0, 0, 0, 255)
-                                DisplayText(CreateVarString(10, 'LITERAL_STRING', L('interact_npc', npc.data.name)), screenX, screenY)
+                                SetTextDropshadow(2, 0, 0, 0, 255)
+                                DisplayText(CreateVarString(10, 'LITERAL_STRING', npc.data.name), screenX, screenY - 0.025)
+                                
+                                -- Draw interaction prompt
+                                SetTextScale(0.35, 0.35)
+                                SetTextColor(200, 255, 200, 255)
+                                SetTextCentre(true)
+                                SetTextDropshadow(2, 0, 0, 0, 255)
+                                DisplayText(CreateVarString(10, 'LITERAL_STRING', '[G] Character Customization'), screenX, screenY + 0.005)
                             end
+                            
+                            -- Draw marker at NPC feet for better visibility
+                            DrawMarker(
+                                0x94FDAE17,                          -- Type: Cylinder marker
+                                npcCoords.x, npcCoords.y, npcCoords.z - 0.98,  -- Position
+                                0.0, 0.0, 0.0,                       -- Direction
+                                0.0, 0.0, 0.0,                       -- Rotation
+                                0.8, 0.8, 0.5,                       -- Scale (X, Y, Z)
+                                255, 200, 100, 100,                  -- Color (R, G, B, A)
+                                false, false, 2, false, nil, nil, false
+                            )
                             
                             -- Check for key press
                             if IsControlJustPressed(0, Config.Keys.interact) then
@@ -605,23 +625,61 @@ end)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 CreateThread(function()
+    print('[LXR-PedScale] Initialization starting...')
+    print('[LXR-PedScale] Framework: ' .. Framework.GetActiveFramework())
+    
     -- Wait for framework to load
+    local attempts = 0
     while not Framework.IsPlayerLoaded() do
         Wait(100)
+        attempts = attempts + 1
+        
+        -- Every 5 seconds (50 attempts * 100ms = 5000ms), log progress
+        if attempts % 50 == 0 then
+            local elapsedSeconds = (attempts * 100) / 1000
+            print('[LXR-PedScale] Waiting for player to load... (' .. elapsedSeconds .. 's)')
+        end
+        
+        if attempts > 600 then -- 60 seconds timeout (600 * 100ms)
+            print('[LXR-PedScale] WARNING: Player load timeout, forcing initialization')
+            Framework.Loaded = true
+            break
+        end
     end
     
     Wait(2000) -- Additional wait for stability
     
+    print('[LXR-PedScale] Starting NPC spawn process...')
+    
     -- Spawn all NPCs
-    for _, npcData in ipairs(Config.NPCs) do
-        SpawnNPC(npcData)
+    for i, npcData in ipairs(Config.NPCs) do
+        local success, err = pcall(function()
+            SpawnNPC(npcData)
+        end)
+        
+        if not success then
+            print('[LXR-PedScale] ERROR spawning NPC ' .. (npcData.name or 'Unknown') .. ': ' .. tostring(err))
+        else
+            print('[LXR-PedScale] Successfully spawned NPC: ' .. (npcData.name or 'Unknown'))
+        end
     end
+    
+    print('[LXR-PedScale] Spawned ' .. #spawnedNPCs .. ' NPCs out of ' .. #Config.NPCs .. ' configured')
     
     -- Setup interaction system
     if Config.General.useTarget then
-        SetupTargetSystem()
+        local targetState = GetResourceState('ox_target')
+        if targetState == 'started' then
+            SetupTargetSystem()
+            print('[LXR-PedScale] Using ox_target interaction system')
+        else
+            print('[LXR-PedScale] WARNING: useTarget is true but ox_target is not started (state: ' .. targetState .. ')')
+            print('[LXR-PedScale] Falling back to prompt-based interaction')
+            SetupPromptSystem()
+        end
     else
         SetupPromptSystem()
+        print('[LXR-PedScale] Using prompt-based interaction system')
     end
     
     -- Request current scale from server
@@ -648,6 +706,39 @@ end, false)
 
 -- Register the keybind mapping (makes it appear in game settings)
 RegisterKeyMapping('+lxr_pedscale_interact', 'Interact with Character Customization NPC', 'keyboard', 'G')
+
+-- Debug command to test menu system
+RegisterCommand('pedscale_test', function(source, args, rawCommand)
+    if Config.Debug.enabled then
+        print('[LXR-PedScale] Testing menu system...')
+        
+        -- Test with first NPC data
+        if Config.NPCs and Config.NPCs[1] then
+            OnNPCInteract(Config.NPCs[1])
+            print('[LXR-PedScale] Opened test menu')
+        else
+            print('[LXR-PedScale] ERROR: No NPCs configured')
+        end
+    end
+end, false)
+
+-- Debug command to check spawned NPCs
+RegisterCommand('pedscale_status', function(source, args, rawCommand)
+    if Config.Debug.enabled then
+        print('[LXR-PedScale] === Status Report ===')
+        print('Framework: ' .. Framework.GetActiveFramework())
+        print('Player Loaded: ' .. tostring(Framework.IsPlayerLoaded()))
+        print('Spawned NPCs: ' .. #spawnedNPCs .. ' / ' .. #Config.NPCs)
+        print('In Customization: ' .. tostring(inCustomization))
+        print('ox_lib State: ' .. GetResourceState('ox_lib'))
+        print('ox_target State: ' .. GetResourceState('ox_target'))
+        
+        for i, npc in ipairs(spawnedNPCs) do
+            local exists = DoesEntityExist(npc.ped)
+            print(string.format('  NPC %d (%s): %s', i, npc.data.name, exists and 'EXISTS' or 'MISSING'))
+        end
+    end
+end, false)
 
 -- Cleanup on resource stop
 AddEventHandler('onResourceStop', function(resourceName)
