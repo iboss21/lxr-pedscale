@@ -535,7 +535,13 @@ else
                     Wait(0)
                     
                     -- Draw menu background
-                    DrawSprite('generic_textures', 'hud_menu_4a', 0.5, 0.3, 0.35, 0.5, 0.0, 0, 0, 0, 200)
+                    DrawSprite(
+                        'generic_textures', 'hud_menu_4a',  -- Texture dictionary and name
+                        0.5, 0.3,                            -- Screen position (X, Y)
+                        0.35, 0.5,                           -- Size (width, height)
+                        0.0,                                 -- Rotation
+                        0, 0, 0, 200                         -- Color (R, G, B, A)
+                    )
                     
                     -- Draw header
                     SetTextScale(0.45, 0.45)

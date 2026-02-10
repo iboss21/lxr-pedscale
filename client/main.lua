@@ -548,12 +548,12 @@ local function SetupPromptSystem()
                             
                             -- Draw marker at NPC feet for better visibility
                             DrawMarker(
-                                0x94FDAE17, -- MARKER_CYLINDER
-                                npcCoords.x, npcCoords.y, npcCoords.z - 0.98,
-                                0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0,
-                                0.8, 0.8, 0.5,
-                                255, 200, 100, 100,
+                                0x94FDAE17,                          -- Type: Cylinder marker
+                                npcCoords.x, npcCoords.y, npcCoords.z - 0.98,  -- Position
+                                0.0, 0.0, 0.0,                       -- Direction
+                                0.0, 0.0, 0.0,                       -- Rotation
+                                0.8, 0.8, 0.5,                       -- Scale (X, Y, Z)
+                                255, 200, 100, 100,                  -- Color (R, G, B, A)
                                 false, false, 2, false, nil, nil, false
                             )
                             
