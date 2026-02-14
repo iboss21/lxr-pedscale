@@ -705,7 +705,14 @@ RegisterCommand('-lxr_pedscale_interact', function()
 end, false)
 
 -- Register the keybind mapping (makes it appear in game settings)
-RegisterKeyMapping('+lxr_pedscale_interact', 'Interact with Character Customization NPC', 'keyboard', 'G')
+-- Note: RegisterKeyMapping only exists in FiveM, not RedM
+if RegisterKeyMapping then
+    RegisterKeyMapping('+lxr_pedscale_interact', 'Interact with Character Customization NPC', 'keyboard', 'G')
+else
+    if Config.Debug.printFramework then
+        print('[LXR-PedScale] RegisterKeyMapping not available (RedM) - using direct key detection instead')
+    end
+end
 
 -- Debug command to test menu system
 RegisterCommand('pedscale_test', function(source, args, rawCommand)
